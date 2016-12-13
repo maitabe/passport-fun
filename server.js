@@ -12,12 +12,20 @@ app.use(bodyParser.json());
 var expressSession = require('express-session');
 app.use(expressSession({ secret: 'mySecretKey'}));
 
+//initialize passport
 app.use(passport.initialize());
+//initialize session with passport
+app.use(passport.session());
 
-// use serialize library
+// use serialize library, we give an id to the user
 passport.serializeUser(function (user, done) {
   console.log(user);
   done(null, user.myID);
+});
+
+//uncode the secret key that we used with express session and serialize
+passport.deserializeUser(function (user, done) {
+  done(null, user);
 });
 
 //create a global middleware that intercept the request from  app.post
@@ -44,12 +52,24 @@ app.post('/login', passport.authenticate('login', {
 
 //success route
 app.get('/success', function (req, res){
-  res.send("Hey, hello from the server!");
+	// console.log(req.user);
+  if (!req.isAuthenticated()) {// Denied. Redirect to login
+    console.log('DEEEnied');
+    res.redirect('/login');
+  } else {
+    res.send('Hey, hello from the server!');
+  }
 });
 
 //login  route
 app.get('/login', function (req, res) {
   res.sendFile(__dirname + '/login.html');
+});
+
+//log out route, wont let you use your session if you logou
+app.get('/logout', function (req, res) {
+  req.logout();
+  res.send('Logged out!');
 });
 
 
